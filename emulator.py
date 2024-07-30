@@ -205,34 +205,35 @@ def read_file():
 
     return formatted
 
-#try:
-if len(sys.argv) < 2: raise Exception("Missing arguments! No Input file!")
+try:
+    if len(sys.argv) < 2: raise Exception("Missing arguments! No Input file!")
 
-content = read_file()
-code_pos = 0
-running = True
+    content = read_file()
+    code_pos = 0
+    running = True
 
-global_data = GlobalData()
-op_codes = OperationCodes(global_data)
+    global_data = GlobalData()
+    op_codes = OperationCodes(global_data)
 
-init(content[0:16],global_data)
-content = content[16:]
-while running:
-    code_pos = op_codes.codes[int(content[code_pos],16)](code_pos,content)
+    init(content[0:16],global_data)
+    content = content[16:]
+    while running:
+        op_code = int(content[code_pos],16)
+        code_pos = op_codes.codes[op_code](code_pos,content)
 
-    # Displaying things
-    if global_data.mode == 0:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT: running = False
+        # Displaying things
+        if global_data.mode == 0:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT: running = False
 
-        pygame.display.flip()
+            pygame.display.flip()
 
-    if code_pos == -1:
-        running = False
+        if code_pos == -1:
+            running = False
 
-print("The app returned code "+str(global_data.exit_code)+".")
+    print("The app returned code "+str(global_data.exit_code)+".")
 
-#except Exception as ex:
-#    pygame.quit()
-#    print(str(ex))
-#    input("Press ENTER to Exit. ")
+except Exception as ex:
+    pygame.quit()
+    print(str(ex))
+    input("Press ENTER to Exit. ")

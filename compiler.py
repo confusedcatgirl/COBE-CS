@@ -13,6 +13,19 @@ def str_to_ba(s):
     s = str_to_hex(s)
     return [int(s[i:i + 2],16) for i in range(0, len(s), 2)]
 
+def op_to_by(op):
+    if op == "+": return 1
+    elif op == "-": return 2
+    elif op == "*": return 3
+    elif op == "/": return 4
+    elif op == ">": return 10
+    elif op == "<": return 11
+    elif op == ">=": return 12
+    elif op == "<=": return 13
+    elif op == "!=": return 14
+    elif op == "==": return 15
+    else: return 0
+
 input_file = open("test.asm","r").read()
 content = []
 
@@ -54,7 +67,7 @@ for line in content:
     elif line.lower().startswith("nop"): # 0x00 Inst
         inst.extend([0])
 
-    elif ":" in line.lower(): # 0x01 Inst
+    elif ":" in line.lower() and ";" not in line: # 0x01 Inst
         label = line.split(" ")
         
         lbl_name = str_to_ba(label[1].replace(":",""))
@@ -75,28 +88,19 @@ for line in content:
 
         del lbl_name, lbl_con, lbl_content, lbl_type
 
-    elif line.lower().startswith("add"): # 0x02 Inst
+    elif line.lower().startswith("mth"): # 0x02 Inst; MTH num1 + 10 | 02 01 6E756D31 00 01 00 000A 00
         con = line.split(" ")
+
+        num1 = con[1]
+        num2 = con[3]
+        num2_type = 1 if num2.isnumeric() else 0
+        type = op_to_by(con[2])
+
+        if num1.isnumeric(): raise Exception("COMPILER::USER_CODE::LABEL_ARG_IS_NUMERIC")
+
         inst.extend([2]+str_to_ba(con[1])+[0]+str_to_ba(con[2])+[0])
 
         del con
-
-    elif line.lower().startswith("put"): # 0x0A Inst
-        con = line.split(" ")
-
-        put_type = 1
-        if "\"" in con[1]: put_type = 2
-        if con[1].isnumeric(): put_type = 3
-
-        put_content: list = str_to_ba(' '.join(con[1:]))
-        if put_type == 3:
-            put_content = num_to_ba(con[1])
-
-        inst.extend([10,put_type]+put_content+[0])
-
-        del put_type, put_content, con
-
-    elif line.lower().startswith("ret"): # 0x0C Inst
         ret_exists = True
         con = line.split(" ")
         inst.extend([12,int(con[1])])
