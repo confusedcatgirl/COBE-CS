@@ -4,6 +4,8 @@ This project aims for developers who want to include not-hardcoded userspace app
 
 Cosmos OS Bytecode Emulation, or COBE for short will simplify the process, and help with this so that it will be easier.
 
+**IMPORTANT:** COBE is extremely experimental, and only partially functional.
+
 ## How to Run
 
 ``python emulator.py \<bin-file\>``
