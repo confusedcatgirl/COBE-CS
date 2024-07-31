@@ -140,6 +140,7 @@ class GlobalData:
         self.mode = 0
         self.screen_size = [0,0]
         self.variables = {}
+        self.markers = {}
         self.exit_code = 0
 
     def add_var(self,name,type,data):
@@ -150,6 +151,9 @@ class GlobalData:
     
     def set_var(self,name,type,data):
         self.variables.update({name:[type,data]})
+
+    def remove_var(self,name: str):
+        self.variables.popitem(name)
 
 def ba2_to_int(list):
     num1 = list[0]

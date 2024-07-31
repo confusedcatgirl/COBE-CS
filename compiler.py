@@ -49,6 +49,7 @@ header_correct = False
 # Translating the code
 cur_line = 1
 for line in content:
+    # TODO: REPLACE WITH SWITCH
     if line.lower().startswith("header:"): # Header
         header_exists = True
         head = line.replace(" ","").split(",")
@@ -88,25 +89,80 @@ for line in content:
 
         del lbl_name, lbl_con, lbl_content, lbl_type
 
-    elif line.lower().startswith("mth"): # 0x02 Inst; MTH num1 + 10 | 02 01 6E756D31 00 01 00 000A 00
+    elif line.lower().startswith("mth"): # 0x02 Inst
         con = line.split(" ")
 
         num1 = con[1]
-        num2 = con[3]
-        num2_type = 1 if num2.isnumeric() else 0
+        num2 = str_to_ba(con[3])
+        num_type = 1
+        if con[3].isnumeric():
+            num2 = num_to_ba(int(con[3]))
+            num_type = 0
         type = op_to_by(con[2])
 
-        if num1.isnumeric(): raise Exception("COMPILER::USER_CODE::LABEL_ARG_IS_NUMERIC")
+        if num1.isnumeric(): raise Exception("COMPILER::USER_CODE::LABEL_ARG_IS_NUMERIC\nLine: "+str(cur_line))
 
-        inst.extend([2]+str_to_ba(con[1])+[0]+str_to_ba(con[2])+[0])
+        inst.extend([2,type]+str_to_ba(num1)+[0,num_type]+num2+[0])
 
-        del con
+        del con, num1, num2, type
+
+    elif line.lower().startswith("put"): # 0x03 Inst
+        con = line.split(" ")
+
+        type = 3
+        if "\"" in con[1]: type = 2
+        elif not con[1].isnumeric(): type = 1
+
+        put_content = 0
+        if type == 1: put_content = str_to_ba(con[1])
+        if type == 2: put_content = str_to_ba(" ".join(con[1:]))
+        if type == 3: put_content = num_to_ba(con[1])
+
+        inst.extend([3,type]+put_content+[0])
+
+        del con, type
+
+    elif line.lower().startswith("rki"): # 0x04 Inst
+       con = line.split(" ")
+       inst.extend([4]+str_to_ba(con[1])+[0])
+
+       del con
+
+    elif line.lower().startswith("ret"): # 0x05 Inst
         ret_exists = True
         con = line.split(" ")
-        inst.extend([12,int(con[1])])
+        inst.extend([5,int(con[1])])
         ret_correct = True
 
         if cur_line == len(content): ret_atend = True
+
+        del con
+
+    elif line.lower().startswith("mrk"): # 0x06 Inst
+        con = line.split(" ")
+        inst.extend([6]+str_to_ba(con[1])+[0])
+
+        del con
+
+    elif line.lower().startswith("jmp"): # 0x07 Inst
+        con = line.split(" ")
+        inst.extend([7]+str_to_ba(con[1])+[0])
+
+        del con
+
+    elif line.lower().startswith("ssc"): # 0x08 Inst
+        con = line.split(" ")
+        inst.extend([8]+num_to_ba(int(con[1]))+num_to_ba(int(con[2])))
+
+        del con
+
+    elif line.lower().startswith("bep"): # 0x09 Inst
+        inst.append(9)
+
+    elif line.lower().startswith("wft"): # 0x0A Inst
+        con = line.split(" ")
+
+        inst.extend([10]+num_to_ba(int(con[1])))
 
         del con
 
