@@ -40,7 +40,6 @@ inst = []
 
 # Flags to check if code is proper
 ret_exists = False
-ret_atend = False
 ret_correct = False
 
 header_exists = False
@@ -65,10 +64,13 @@ for line in content:
 
         del head
 
-    elif line.lower().startswith("nop"): # 0x00 Inst
+    elif line.lower().startswith(";"): # Comment
+        pass
+
+    elif line.lower().startswith("nop"): # 0x00 Inst; NOP
         inst.extend([0])
 
-    elif ":" in line.lower() and ";" not in line: # 0x01 Inst
+    elif ":" in line.lower() and ";" not in line: # 0x01 Inst; String hello: "Hello World!" | 01 02 68656C6C6F 00 2248656C6C6F20576F726C642122 
         label = line.split(" ")
         
         lbl_name = str_to_ba(label[1].replace(":",""))
@@ -87,9 +89,9 @@ for line in content:
         else:
             labels.extend([1,lbl_type]+lbl_name+[0, lbl_content])
 
-        del lbl_name, lbl_con, lbl_content, lbl_type
+        del lbl_name, lbl_con, lbl_content, lbl_type, label
 
-    elif line.lower().startswith("mth"): # 0x02 Inst
+    elif line.lower().startswith("mth"): # 0x02 Inst; MTH num1 + 10 | 02 06 6E756D31 00 00 000A 00
         con = line.split(" ")
 
         num1 = con[1]
@@ -159,25 +161,44 @@ for line in content:
     elif line.lower().startswith("bep"): # 0x09 Inst
         inst.append(9)
 
-    elif line.lower().startswith("wft"): # 0x0A Inst
+    elif line.lower().startswith("ifj"): # 0x0A Inst
         con = line.split(" ")
 
-        inst.extend([10]+num_to_ba(int(con[1])))
+        con[3] = "".join(con[3].rsplit(":", len(con[3])))
 
-        del con
+        arg1t = int(not con[1].isnumeric())
+        arg2t = int(not con[3].isnumeric())
+        arg1 = num_to_ba(int(con[1])) if arg1t == 1 else str_to_ba(con[1])
+        arg2 = num_to_ba(int(con[3])) if arg2t == 1 else str_to_ba(con[3])
+        op = op_to_by(con[2])
 
-    elif line.lower().startswith(";"):
+        inst.extend([10])
+
+        del con, arg1, arg2, arg1t, arg2t, op
+
         pass
 
-    else: raise Exception("COMPILER::USER_CODE::UNKNOWN_INST\nLine: "+str(cur_line))
+    else: raise Exception("COMPILER::USER_CODE::UNKNOWN_INST\nLine: "+str(cur_line)+"\nFile: ")
 
     cur_line += 1
 
 del cur_line, content, input_file
 
+'''
+| 0x0A | IFJ | When the If is true, it will go down, otherwise jump to the marker. | IFJ 10 >= num1 marker01 | 0A 00000A 00 12 016E756D31 00 6D61726B65723031 00 |
+| | | | IFJ num1 < 19 marker1 | 0A 016E756D31 11 000013 00 6D61726B65723031 00 |
+| 0x0B | DTB | Draws a pixel to the buffer at a specific position. | DTB 300 250 #0495AB | 0B 021C 00FA 0495AB |
+| 0x0C | CDB | Clears the draw buffer. | CDB | 0C |
+| 0x0D | RFB | Removes a pixel from the draw buffer. | RFB 301 250 | 0D 021D 00FA |
+| 0x0E | WFT | Waits a specific time in milliseconds. | WFT 1000 | 0E 03E8 |
+| 0x0F | LFL | Loads a specific file into a label. | LFL text N "test.txt" | 0F 74657874 00 01 22746573742E74787422 00 |
+| | | | LFL bin B "binary.bin" | 0F x 00 02 2262696E6172792E62696E22 |
+
+'''
+
 # Raising Exceptions if user forgot basic shit
 if not ret_exists: raise Exception("COMPILER::USER_CODE::RETURN_MISSING")
-if not ret_atend: raise Exception("COMPILER::USER_CODE::RETURN_NOT_AT_END")
+if not ret_correct: raise Exception("COMPILER::USER_CODE::RETURN_MALFORMED")
 
 if not header_exists: raise Exception("COMPILER::USER_CODE::HEADER_MISSING")
 if not header_correct: raise Exception("COMPILER::USER_CODE::HEADER_MALFORMED")
