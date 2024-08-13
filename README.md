@@ -25,6 +25,7 @@ The Compiler tries to be very dynamic as possible. Any variable name without spa
 Another limitation is the space placement. COBE does not support intendation or double spaces, maybe in the future :P
 
 Also, the emulator has to be rewritten for each cosmos project to some extend, as each os handles certain instructions a bit different.
+Most importantly, do NOT create circle imports in scripts, making them import each other.
 
 ## TODO
 
@@ -42,7 +43,7 @@ The Header ranges from Address 00000000 to 0000000F
 
 | Address | Description | Size |
 |---------|-------------|------|
-| 0000 0000 | Mode of Program. 1 = CMD; 0 = GUI | 1 |
+| 0000 0000 | Mode of Program. 2 = LIB; 1 = CMD; 0 = GUI | 1 |
 | 0000 0001 | Screen Width | 2 |
 | 0000 0003 | Screen Height | 2 |
 
@@ -51,10 +52,10 @@ The Header ranges from Address 00000000 to 0000000F
 | Hex  | Code | Description | Example | Binary Representation |
 |------|------|-------------|---------|-----------------------|
 | 0x00 | NOP | No Operation. Does nothing. | NOP | 00 |
-| 0x01 | LBL | A variable like object. | LBL String hello: "Hello World!" | 01 02 68656C6C6F 00 2248656C6C6F20576F726C642122 |
-| | | | Number num: 15 | 01 03 6E756D 00 000E |
+| 0x01 | LBL | A variable like object. | LBL String hello "Hello World!" | 01 02 68656C6C6F 00 2248656C6C6F20576F726C642122 |
+| | | | Number num 15 | 01 03 6E756D 00 000E |
 | | | | File file: "test.txt" | 01 05 66696C65 00 22746573742E74787422 |
-| 0x02 | MTH | Combines math with labels. First argument has to be a label. | MTH num1 + 10 | 02 06 6E756D31 00 03 000A 00 |
+| 0x02 | MTH | Combines math with labels. First argument has to be a label. | MTH num1 + 10 | 02 01 6E756D31 00 03 000A 00 |
 | 0x03 | PUT | Write a string to the screen. Add a \n manually for a new line. | PUT hello | 03 06 68656C6C6F0A 00 |
 | | | | PUT "Hello World!" | 03 02 2248656C6C6F20576F726C642122 00 |
 | | | | PUT 1 | 03 03 0001 00 |
@@ -64,12 +65,14 @@ The Header ranges from Address 00000000 to 0000000F
 | 0x07 | JMP | Jumps to a specific marker. | JMP marker01 | 07 6D61726B65723031 00 |
 | 0x08 | SSC | Sets the screen to w and h. | SSC 800 800 | 08 03 0320 00 03 0258 00 |
 | 0x09 | BEP | Beeps in a specific length and frequency. | BEP 1000 1000 | 09 03 03E8 00 03 03E8 00 |
-| 0x0A | IFJ | When the If is true, it will go down, otherwise jump to the marker. | IFJ 10 >= num1 marker01 | 0A 12 03 000A 00 01 6E756D31 00 6D61726B65723031 00 |
+| 0x0A | IFJ | When the If is true, it will go down, otherwise jump to the marker. | IFJ 10 >= num1 marker01 | 0A 12 03 000A 00 06 6E756D31 00 6D61726B65723031 00 |
 | | | | IFJ num1 < 19 marker1 | 0A 11 06 6E756D31 00 03 0013 00 6D61726B65723031 00 |
 | 0x0B | DTB | Draws a pixel to the buffer at a specific position. | DTB 300 250 #0495AB | 0B 03 021C 00 03 00FA 00 04 0495AB 00 |
 | 0x0C | CDB | Clears the draw buffer. | CDB #000000 | 0C 04 000000 00 |
 | 0x0D | RFB | Removes a pixel from the draw buffer. | RFB 301 250 | 0D 03 021D 00 03 00FA 00 |
 | 0x0E | WFT | Waits a specific time in milliseconds. | WFT 1000 | 0E 03 03E8 00 |
+| 0x0F | IMP | Imports another asm file. | IMP test | FF \<script\> FF |
+| 0x10 | RTJ | When called, it will jump back to the JMP instruction that jumped to the marker. | RTJ marker1 | 10 6D61726B65723031 00 |
 
 ## Creating Markers
 
@@ -81,7 +84,7 @@ PUT "A loop!"
 JMP loop
 ```
 
-Markers can also be used as equivalent of functions
+Markers can also be used as equivalent of functions. Markers can not
 
 ## Templates
 

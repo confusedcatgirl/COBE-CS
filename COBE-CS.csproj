@@ -6,10 +6,11 @@
     <RootNamespace>COBE_CS</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <StartupObject>COBE_CS.EmulatorProgram</StartupObject>
   </PropertyGroup>
 
-  <ItemGroup>
-    <None Remove="test.asm" />
+  <ItemGroup Condition="'$(Configuration)' == 'Debug'">
+    <None Update="test.asm" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>
