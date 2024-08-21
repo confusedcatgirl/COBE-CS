@@ -6,17 +6,13 @@ Cosmos OS Bytecode Emulation, or COBE for short will simplify the process, and h
 
 ## How to Run
 
-``python emulator.py \<bin-file\>``
+``python emulator.py <bin-file>``
 
-## Roadmap
+### **WARNING:** The python files were using for prototyping, and are mostly unusable by now. They will be removed soon, so resort into using the C# version
 
-- Adding full Emulation capabilities
+``COBE-CS.exe compile <asm-file> <cae-file>``
 
-- Including a simple "compiler"
-
-- Rewriting the emulator into C#
-
-- Including Docs on how to port it to the own COSMOS OS
+``COBE-CS.exe emulate <cae-file>``
 
 ## Limitations and Strengths
 
@@ -25,7 +21,8 @@ The Compiler tries to be very dynamic as possible. Any variable name without spa
 Another limitation is the space placement. COBE does not support intendation or double spaces, maybe in the future :P
 
 Also, the emulator has to be rewritten for each cosmos project to some extend, as each os handles certain instructions a bit different.
-Most importantly, do NOT create circle imports in scripts, making them import each other.
+
+Most importantly, do NOT create circle imports in scripts, making them import each other, as this WILL softlock the.
 
 ## TODO
 
@@ -33,9 +30,15 @@ Most importantly, do NOT create circle imports in scripts, making them import ea
 
 - Midi Loading and outputting
 
-- Multithreading
+- Multithreading (Once COSMOS will have them in)
 
-- Loops
+- Loops (Partially implemented)
+
+- Pointermap for large programs
+
+- Including Docs on how to port it to the own COSMOS OS
+
+-
 
 ## Header
 
@@ -127,6 +130,8 @@ Only required when when coding directly in bytecode. Defines what type the follo
 
 The label cannot be used as type, otherwise it will cause problems.
 
+Files will be automatically assigned a special file type once they are loaded.
+
 ## Operators
 
 The Common Comparisons (>, <, >=, <=, !=, ==) can be used in Ifs and certain loops. Please refer to the tables above and below for further information.
@@ -137,6 +142,7 @@ The Common Comparisons (>, <, >=, <=, !=, ==) can be used in Ifs and certain loo
 | - | 02 |
 | * | 03 |
 | / | 04 |
+| = | 05 |
 | > | 10 |
 | < | 11 |
 | >= | 12 |

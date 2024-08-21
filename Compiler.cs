@@ -1,4 +1,4 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System.Globalization;
 using System.Text;
 
 namespace COBE_CS {
@@ -8,7 +8,7 @@ namespace COBE_CS {
         public int cur_line = 0;
 
         List<Byte> header = new List<byte>();
-        List<Byte> inst = new List<byte>();
+        public List<Byte> inst = new List<byte>();
 
         bool ret_exists = false;
         bool ret_correct = false;
@@ -43,25 +43,37 @@ namespace COBE_CS {
             string s = num.ToString("X");
             List<Byte> hex = new List<byte>();
 
-            // "320" -> [3, 2, 0]
-            for (int i = 0; i < s.Length; i++) { hex.Add(Convert.ToByte(s[i].ToString(),16)); }
-
-            // [3, 2, 0] -> [0, 3, 2, 0]
-            List<Byte> zeros = new List<byte>();
-            for (int i = 4 - hex.Count; i > 0; i--) {
-                zeros.Insert(zeros.Count,0);
+            // "320" -> "0320" -> [ 03, 20 ]
+            string zeros = "";
+            for (int i = 4 - s.Length; i > 0; i--) {
+                zeros += "0";
             }
-            hex.InsertRange(0,zeros);
+            s = zeros + s;
+
+            // The number is now 4 long, split it in half.
+            hex.Add(Byte.Parse(s[0..2],NumberStyles.HexNumber));
+            hex.Add(Byte.Parse(s[2..4],NumberStyles.HexNumber));
 
             return hex.ToArray();
         }
 
         public byte[] strToBa(string s) {
             List<Byte> intStr = new List<byte>();
+
+            int position = 0;
             foreach (char letter in s) {
+                if (letter == '\\') {
+                    switch (s[position + 1]) {
+                        case 't': break;
+                        default:
+                            throw new Exception("UNKNOWN_ESCAPE_SEQUENCE");
+                    }
+
+                }
                 int value = Convert.ToInt32(letter);
 
                 intStr.Add((byte)value);
+                position += 1;
             }
 
             return intStr.ToArray();
@@ -73,6 +85,7 @@ namespace COBE_CS {
                 case "-": return 2;
                 case "*": return 3;
                 case "/": return 4;
+                case "=": return 5;
                 case ">": return 10;
                 case "<": return 11;
                 case ">=": return 12;
@@ -107,16 +120,17 @@ namespace COBE_CS {
                         if (con[1].ToLower() == "terminal") mode = 1;
                         else if (con[1].ToLower() == "graphical") mode = 0;
                         else if (con[1].ToLower() == "library") mode = 2;
+                        else throw new Exception("UNKNOWN_MODE");
   
-                        byte[] width = new byte[] { 0, 0, 0, 0 };
-                        byte[] height = new byte[] { 0, 0, 0, 0 };
+                        byte[] width = new byte[] { 0, 0 };
+                        byte[] height = new byte[] { 0, 0 };
 
                         if (mode != 2) {
                             width = intToBa(Int32.Parse(con[2]));
                             height = intToBa(Int32.Parse(con[3]));
                         }
 
-                        header.InsertRange(0,new byte[]{ 0, 0, 0, 0, 0, 0, 0});
+                        header.InsertRange(0,new byte[]{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
                         header.InsertRange(0,height);
                         header.InsertRange(0,width);
                         header.Insert(0,mode);
@@ -135,9 +149,6 @@ namespace COBE_CS {
                     }
                     
                     case "lbl": {
-                        // Label Name
-                        List<byte> ninst = [ 2, ..strToBa(prefix+con[2]), 0 ];
-
                         // Label Type
                         byte lbl_type = 0;
 
@@ -145,6 +156,8 @@ namespace COBE_CS {
                         else if (con[1].ToLower() == "string") lbl_type = 2;
                         else if (con[1].ToLower() == "boolean") lbl_type = 1;
                         else throw new Exception("UNKNOWN_LABEL_TYPE");
+
+                        List<byte> ninst = [ 1, lbl_type, ..strToBa(prefix+con[2]), 0 ];
 
                         // Label Content
                         string lbl_con = String.Join(" ",con[3..]);
@@ -169,6 +182,9 @@ namespace COBE_CS {
                         if (con[3].All(char.IsDigit)) {
                             num2 = intToBa(Int32.Parse(con[3]));
                             numt = 3;
+                        } else if (con[3].Contains("\"")) {
+                            num2 = strToBa(string.Join(" ",con[3..]));
+                            numt = 2;
                         }
                         byte op = opToBy(con[2]);
 
@@ -430,6 +446,7 @@ namespace COBE_CS {
         }
 
         // ------------------- Write to binary file ---------------------
+
         public void WriteToBIN(string path) {
             BinaryWriter binfile = new BinaryWriter(File.OpenWrite(path));
             binfile.Write(header.ToArray());
@@ -441,7 +458,7 @@ namespace COBE_CS {
     class CompilerProgram {
         static Compiler compiler = new Compiler();
 
-        public static void Main(string[] args) { // exe.exe test.asm app.cae
+        public void Main(string[] args) { // exe.exe test.asm app.cae
             string infile = "test.asm";
             string outfile = "app.cae";
 
@@ -452,16 +469,16 @@ namespace COBE_CS {
                 if (args.Length >= 3) Console.WriteLine("Too many arguments, ignoring leftover.");
             } catch (Exception ex){ Console.WriteLine(ex.Message); return; }
 
-            //try {
+            try {
                 compiler.LoadASM(infile);
                 compiler.Compile();
                 compiler.CheckFlags();
                 compiler.WriteToBIN(outfile);
-            /*} catch (Exception ex){
+            } catch (Exception ex){
                 Console.WriteLine(ex.Message);
                 if (!compiler.flag_err) Console.WriteLine("Line: "+compiler.cur_line);
                 Console.WriteLine("File: "+infile);
-            }*/
+            }
         }
     }
 }
