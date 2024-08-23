@@ -6,6 +6,7 @@ namespace COBE_CS {
         string prefix = "";
         string[] asm_content = {};
         public int cur_line = 0;
+        string title = "Program";
 
         List<Byte> header = new List<byte>();
         public List<Byte> inst = new List<byte>();
@@ -14,9 +15,10 @@ namespace COBE_CS {
         bool ret_correct = false;
         bool header_exists = false;
         bool header_correct = false;
+        bool custom_title = false;
         public bool flag_err = false;
 
-        public void PrintA(string type, byte[] bytes) {
+        public void PrintA(string type, char[] bytes) {
             var sb = new StringBuilder(type+" compiled as byte { ");
             int index = 0;
             foreach (var b in bytes) {
@@ -28,16 +30,6 @@ namespace COBE_CS {
             Console.WriteLine(sb.ToString());
         }
 
-        public void PrintA(string type, string[] bytes) {
-            var sb = new StringBuilder(type+" compiled as byte { ");
-            foreach (var b in bytes) {
-                sb.Append(b);
-                if (bytes.Last() != b) sb.Append(", ");
-            }
-            sb.Append(" }");
-            Console.WriteLine(sb.ToString());
-        }
-    
         // ------------------- Conversion Functions ---------------------
         public byte[] intToBa(int num) {
             string s = num.ToString("X");
@@ -61,21 +53,32 @@ namespace COBE_CS {
             List<Byte> intStr = new List<byte>();
 
             int position = 0;
+            bool next = false;
             foreach (char letter in s) {
+                if (next) { next = false; position += 1; continue; }
+                
+                int value = Convert.ToInt32(letter);
+
                 if (letter == '\\') {
                     switch (s[position + 1]) {
-                        case 't': break;
+                        case 't': 
+                            next = true;
+                            value = 9;
+                            break;
+                        case 'n':
+                            next = true;
+                            value = 10;
+                            break;
                         default:
-                            throw new Exception("UNKNOWN_ESCAPE_SEQUENCE");
+                            throw new Exception("UNKNOWN_ESCAPE_SEQUENCE: " +
+                                letter + s[position + 1]);
                     }
 
                 }
-                int value = Convert.ToInt32(letter);
 
                 intStr.Add((byte)value);
                 position += 1;
             }
-
             return intStr.ToArray();
         }
 
@@ -122,20 +125,35 @@ namespace COBE_CS {
                         else if (con[1].ToLower() == "library") mode = 2;
                         else throw new Exception("UNKNOWN_MODE");
   
-                        byte[] width = new byte[] { 0, 0 };
-                        byte[] height = new byte[] { 0, 0 };
+                        byte[] width = [0, 0];
+                        byte[] height = [0, 0];
 
                         if (mode != 2) {
                             width = intToBa(Int32.Parse(con[2]));
                             height = intToBa(Int32.Parse(con[3]));
                         }
 
-                        header.InsertRange(0,new byte[]{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
-                        header.InsertRange(0,height);
-                        header.InsertRange(0,width);
-                        header.Insert(0,mode);
+                        header.Add(mode);
+                        header.AddRange(width);
+                        header.AddRange(height);
+                        header.AddRange([0,0,0,0,0,0,0,0,0,0,0]);
 
                         header_correct = true;
+                        break;
+                    }
+
+                    case "title:" : {
+                        string s = string.Join(" ",con[1..]).Replace("\"","");
+                        s = s[..32];
+
+                        List<byte> zeros = new List<byte>();
+                        for (int i = 32 - s.Length; i > 0; i--) {
+                            zeros.Add(0);
+                        }
+
+                        header.AddRange(strToBa(s));
+                        header.AddRange(zeros);
+                        custom_title = true;
                         break;
                     }
                     
@@ -443,6 +461,17 @@ namespace COBE_CS {
 
             if (!ret_exists) throw new Exception("RETURN_NOT_PRESENT");
             if (!ret_correct) throw new Exception("RETURN_NOT_PRESENT");
+
+            if (!custom_title) {
+                string s = string.Join(" ",title).Replace("\"","");
+
+                List<byte> zeros = new List<byte>();
+                for (int i = 32 - s.Length; i > 0; i--) {
+                    zeros.Add(0);
+                }
+                header.AddRange(strToBa(s));
+                header.AddRange(zeros);
+            }
         }
 
         // ------------------- Write to binary file ---------------------

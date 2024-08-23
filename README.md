@@ -6,23 +6,52 @@ Cosmos OS Bytecode Emulation, or COBE for short will simplify the process, and h
 
 ## How to Run
 
-``python emulator.py <bin-file>``
-
-### **WARNING:** The python files were using for prototyping, and are mostly unusable by now. They will be removed soon, so resort into using the C# version
-
+Compile the assembly file: 
 ``COBE-CS.exe compile <asm-file> <cae-file>``
 
+Execute the binary file: 
 ``COBE-CS.exe emulate <cae-file>``
+
+Compiles and executes the assembly file: 
+``COBE-CS.exe run <asm-file> <cae-file>``
 
 ## Limitations and Strengths
 
-The Compiler tries to be very dynamic as possible. Any variable name without spaces is possible, excluding escape sequences, as they might cause problems. Instructions are case insensitive, and are recommended to be always written uppercase. This language does not support classes, or single line coding, as every instruction requires it's own line.
+The Compiler tries to be very dynamic as possible. Any variable name without spaces is possible, excluding escape sequences. Instructions are case insensitive, and are recommended to be always written uppercase. This language does not support classes, or single line coding, as every instruction requires it's own line.
 
 Another limitation is the space placement. COBE does not support intendation or double spaces, maybe in the future :P
 
-Also, the emulator has to be rewritten for each cosmos project to some extend, as each os handles certain instructions a bit different.
+Also, the emulator has to be rewritten for each cosmos project to some extend, as each os handles certain instructions a bit different. To have Cobe at it's full disposal, look at Requirements
 
-Most importantly, do NOT create circle imports in scripts, making them import each other, as this WILL softlock the.
+Most importantly, do NOT create circle imports in scripts, making them import each other, as this WILL softlock the compiler.
+
+## Requirements
+
+To fully utilize COBE, there are some requirements you have to meet. This is what you need to properly bring COBE to your operating system:
+
+- A basic I/O terminal-based OS
+
+- Input capabilities
+
+- VFS
+
+- Audio Driver set up
+
+However, this will limit you to terminal based applications only. To utilize GUI, you need: 
+
+- A GUI-based OS
+
+- A Window class with the capability to focus
+
+- Capability to create both GUI and terminal based windows
+
+- Input capabilities
+
+- VFS
+
+- Audio Driver set up
+
+Please note that this list may vary as it has not been ported over to cosmos yet.
 
 ## TODO
 
@@ -38,17 +67,18 @@ Most importantly, do NOT create circle imports in scripts, making them import ea
 
 - Including Docs on how to port it to the own COSMOS OS
 
--
+- Reverse Engineer Programs
 
 ## Header
 
-The Header ranges from Address 00000000 to 0000000F
+The Header ranges from Address 00000000 to 0000000F with ``Header:``, but can be extended with ``Title:`` up to 0000002F. 
 
 | Address | Description | Size |
 |---------|-------------|------|
 | 0000 0000 | Mode of Program. 2 = LIB; 1 = CMD; 0 = GUI | 1 |
 | 0000 0001 | Screen Width | 2 |
 | 0000 0003 | Screen Height | 2 |
+| 0000 0010 | Title | 32 Max |
 
 ## List of Opcodes
 

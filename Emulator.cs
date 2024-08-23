@@ -3,11 +3,12 @@ using System.Text;
 using SFML.Window;
 using SFML.Graphics;
 using SFML.System;
-using System.Globalization;
+using System.Reflection;
 
 #pragma warning disable CS8622 // Nullability of reference types
 #pragma warning disable CA1416 // Validate platform compatibility
-#pragma warning disable CS8604 // Possible null reference argument.
+#pragma warning disable CS8604 // Possible null reference argument
+#pragma warning disable CS8597 // Thrown value may be null
 
 namespace COBE_CS {
     class OperationCodes {
@@ -176,7 +177,7 @@ namespace COBE_CS {
         private int RET(int code_pos, byte[] code) {
             // 05 03 0000 00
             byte type = code[code_pos + 1];
-            int end = 0;
+            int end = code.ToList().IndexOf(0,code_pos + 3);
             int con = 0;
 
             code_pos += 2;
@@ -186,7 +187,7 @@ namespace COBE_CS {
             }
 
             global.exit_code = con;
-            return code_pos;
+            return -1;
         }
     }
 
@@ -298,8 +299,7 @@ namespace COBE_CS {
             } else if (globdata.mode == 1) {
                 Console.Clear();
 
-                Console.SetWindowSize((int)globdata.width,(int)globdata.height/4);
-                Console.SetBufferSize((int)globdata.width,(int)globdata.height*16);
+                Console.Title = "";
             }
         }
 
@@ -312,9 +312,10 @@ namespace COBE_CS {
             code_pos = content.ToList().LastIndexOf(255) + 1;
 
             while (running) {
-                int op_code = content[code_pos];
-                Console.WriteLine(code_pos+": "+op_code);
-                code_pos = (int)opcodes.codes[op_code].DynamicInvoke(code_pos, content);
+                try {
+                    int op_code = content[code_pos];
+                    code_pos = (int)opcodes.codes[op_code].DynamicInvoke(code_pos, content);
+                } catch (TargetInvocationException ex) { throw ex.InnerException; }
 
                 if (globdata.mode == 0) {
                     // tBuf.Update([255,255,255,255],1,1,50,50);
@@ -325,7 +326,7 @@ namespace COBE_CS {
                     window.Display();
                 }
 
-                if (globdata.exit_code != -1) {
+                if (code_pos == -1) {
                     Console.WriteLine("Program ended with code "+globdata.exit_code);
                     running = false;
                 }
@@ -338,21 +339,21 @@ namespace COBE_CS {
         static Emulator emulator = new Emulator();
 
         public void Main(string[] args) {
-            //try {
+            try {
                 emulator.loadBIN(args[0]);
                 emulator.init();
                 emulator.loop();
-                Console.ReadLine();
-            /*} catch (Exception ex) {
+                Console.ReadKey();
+            } catch (Exception ex) {
                 string pos = emulator.code_pos.ToString("X");
                 int zlen = 8-pos.Length;
                 pos = new string('0', zlen) + pos;
 
                 Console.WriteLine("Error: "+ex.Message);
-                Console.WriteLine("Occured at 0x"+pos+" and at: "+ex.Source);
+                Console.WriteLine("Occured at 0x"+pos+" and at: "+ex.TargetSite);
 
                 Console.ReadLine();
-            }*/
+            }
         }
     }
 }
