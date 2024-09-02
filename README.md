@@ -12,9 +12,6 @@ Compile the assembly file:
 Execute the binary file: 
 ``COBE-CS.exe emulate <cae-file>``
 
-Compiles and executes the assembly file: 
-``COBE-CS.exe run <asm-file> <cae-file>``
-
 ## Limitations and Strengths
 
 The Compiler tries to be very dynamic as possible. Any variable name without spaces is possible, excluding escape sequences. Instructions are case insensitive, and are recommended to be always written uppercase. This language does not support classes, or single line coding, as every instruction requires it's own line.
@@ -104,7 +101,7 @@ The Header ranges from Address 00000000 to 0000000F with ``Header:``, but can be
 | 0x0C | CDB | Clears the draw buffer. | CDB #000000 | 0C 04 000000 00 |
 | 0x0D | RFB | Removes a pixel from the draw buffer. | RFB 301 250 | 0D 03 021D 00 03 00FA 00 |
 | 0x0E | WFT | Waits a specific time in milliseconds. | WFT 1000 | 0E 03 03E8 00 |
-| 0x0F | IMP | Imports another asm file. | IMP test | FF \<script\> FF |
+| 0x0F | IMP | Imports another asm file. | IMP test | 1502 \<script\> 1501 |
 | 0x10 | RTJ | When called, it will jump back to the JMP instruction that jumped to the marker. | RTJ marker1 | 10 6D61726B65723031 00 |
 
 ## Creating Markers

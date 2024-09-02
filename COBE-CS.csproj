@@ -6,14 +6,7 @@
     <RootNamespace>COBE_CS</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <StartupObject>COBE_CS.Program</StartupObject>
-    <NoWarn>$(NoWarn);NETSDK1206</NoWarn>
   </PropertyGroup>
-
-  <ItemGroup Condition="'$(Configuration)' == 'Debug'">
-    <None Update="test.asm" CopyToOutputDirectory="PreserveNewest" />
-    <None Update="library.asm" CopyToOutputDirectory="PreserveNewest" />
-  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="SFML.Net" Version="2.6.0" />
