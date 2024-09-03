@@ -15,7 +15,7 @@ namespace COBE_CS {
 
 				} else if (args[0] == "compile") {
 					// Compile the given assembly file into binary
-					if (args.Length < 2)
+					if (args.Length < 3)
 						throw new ArgumentException("Too few Arguments!");
 
 					CompilerProgram comprg = new CompilerProgram();

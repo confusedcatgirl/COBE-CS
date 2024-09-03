@@ -34,7 +34,7 @@ namespace COBE_CS {
                                  NOP, NOP, NOP, NOP, NOP, NOP, NOP, NOP, NOP, NOP, NOP, NOP, NOP, NOP, NOP, NOP,
                                  NOP, NOP, NOP, NOP, NOP, NOP, NOP, NOP, NOP, NOP, NOP, NOP, NOP, NOP, NOP, NOP,
                                  NOP, NOP, NOP, NOP, NOP, NOP, NOP, NOP, NOP, NOP, NOP, NOP, NOP, NOP, NOP, NOP]);
-            imp_opc.AddRange([NOP, LBL, NOP, NOP, NOP, NOP, MRK, NOP, NOP, NOP, NOP, NOP, NOP, NOP, NOP, NOP,
+            imp_opc.AddRange([NOP, LBL, NOP, NOP, NOP, NOP, MRK, NOP, NOP, NOP, NOP, NOP, NOP, NOP, NOP, IMP,
                               NOP, NOP, NOP, NOP, NOP, NOP, NOP, NOP, NOP, NOP, NOP, NOP, NOP, NOP, NOP, NOP,
                               NOP, NOP, NOP, NOP, NOP, NOP, NOP, NOP, NOP, NOP, NOP, NOP, NOP, NOP, NOP, NOP,
                               NOP, NOP, NOP, NOP, NOP, NOP, NOP, NOP, NOP, NOP, NOP, NOP, NOP, NOP, NOP, NOP,
@@ -77,7 +77,7 @@ namespace COBE_CS {
 
 
         private int NOP(int code_pos, byte[] code) {
-            Console.WriteLine("NOP: " + code[code_pos]);
+            Console.WriteLine("NOP: "+code[code_pos]+" - "+baToStr([code[code_pos]]));
             code_pos += 1;
             return code_pos;
         }
@@ -112,15 +112,14 @@ namespace COBE_CS {
 
                 case 3:
                     lbl_ne = lbl_e - 1;
-                    lbl_e = lbl_e + 3;
+                    lbl_e = lbl_e + 2;
                     lbl_s = lbl_ne + 1;
                     lbl_content = baToInt(code[lbl_s..lbl_e]);
-                    lbl_e -= 2;
+                    lbl_e -= 1;
                     lbl_type = "number";
                     break;
 
                 case 4:
-                    // 01 04 636F6C 00 FFFFFF 00
                     lbl_ne = lbl_e - 1;
                     lbl_s = lbl_e;
                     lbl_e = lbl_e + 3;
@@ -338,7 +337,12 @@ namespace COBE_CS {
                 case 6: col = global.getVar(baToStr(code[(num2e + 2)..cole])); break;
             }
             
-            global.Buffer.Texture.Update(new byte[]{255,255,255,255},1,1,(uint)num1[1],(uint)num2[1]);
+            RectangleShape pixel = new RectangleShape {
+                Size = new Vector2f(1.0f, 1.0f),
+                FillColor = new Color((uint)col[1]),
+                Position = new Vector2f(num1[1],num2[1])
+            };
+            global.Buffer.Add(pixel);
             return cole + 1;
         }
 
@@ -375,7 +379,7 @@ namespace COBE_CS {
             if (mode == 2) codes = imp_opc;
             else if (mode == 1) codes = normal_opc;
 
-            return code_pos;
+            return code_pos + 2;
 
         }
 
@@ -390,7 +394,7 @@ namespace COBE_CS {
         public uint width = 0, height = 0;
         public bool change_sr = false;
 
-        public Sprite Buffer;
+        public List<RectangleShape> Buffer;
 
         Dictionary<string, dynamic> vars = new Dictionary<string, dynamic>();
         Dictionary<string, int> markers = new Dictionary<string, int>();
@@ -431,7 +435,6 @@ namespace COBE_CS {
         public int code_pos = 0;
 
         private RenderWindow window = new(new VideoMode(1, 1), "Emulator");
-        private Sprite Buffer = new Sprite();
 
         public void PrintA(string type, byte[] bytes) {
             var sb = new StringBuilder(type + " as byte { ");
@@ -468,6 +471,7 @@ namespace COBE_CS {
         // Prepare ---------------------------------------------------
         public void init() {
             window.Close();
+            // Read out header
             byte[] header = content[0..16];
             List<byte> name = content[16..48].ToList();
             content = content[48..];
@@ -485,13 +489,14 @@ namespace COBE_CS {
             name.RemoveAll(x => x == 0);
             String title = Encoding.Default.GetString(name.ToArray());
 
+            // Initalize for each mode
             if (globdata.mode == 0) {
                 VideoMode mode = new VideoMode(globdata.width, globdata.height, 32);
                 window = new RenderWindow(mode, title, Styles.Default);
                 window.SetActive(true);
                 window.Closed += OnClose;
 
-                globdata.Buffer = new Sprite(new Texture(globdata.width, globdata.height));
+                globdata.Buffer = new List<RectangleShape>();
             } else if (globdata.mode == 1) {
                 Console.Clear();
 
@@ -523,10 +528,13 @@ namespace COBE_CS {
                         window.Size = new Vector2u(globdata.width, globdata.height);
                         globdata.change_sr = false;
                     }
-
+                    
                     window.DispatchEvents();
 
-                    window.Draw(globdata.Buffer);
+                    window.Clear(Color.Black);
+                    foreach (var pixel in globdata.Buffer) {
+                        window.Draw(pixel);
+                    }
                     window.Display();
                 }
 

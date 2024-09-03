@@ -18,6 +18,7 @@ namespace COBE_CS {
         bool header_correct = false;
         bool custom_title = false;
         bool has_start = false;
+        bool impscr = false;
         public bool flag_err = false;
 
         public void PrintA(string type, char[] bytes) {
@@ -299,7 +300,8 @@ namespace COBE_CS {
 
                         List<byte> ninst = [];
                         if (con[1] == "_start") {
-
+                            ninst.AddRange([15, 1]);
+                            has_start = true;
                         } else ninst.AddRange([6, ..strToBa(con[1]), 0]);
 
                         inst.AddRange(ninst);
@@ -459,9 +461,8 @@ namespace COBE_CS {
                         imp_comp.Compile();
 
                         // Merge with the main script
-                        imps.AddRange([15,2]);
                         imps.AddRange(imp_comp.inst);
-                        imps.AddRange([15,1]);
+                        impscr = true;
                         break;
                     }
 
@@ -485,7 +486,7 @@ namespace COBE_CS {
         }
 
         // Check if everything is in order
-        public void CheckFlags()  {
+        public void CheckFlags() {
             flag_err = true;
             if (!header_exists) throw new Exception("HEADER_NOT_PRESENT");
             if (!header_correct) throw new Exception("HEADER_NOT_CORRECT");
@@ -497,12 +498,20 @@ namespace COBE_CS {
                 string s = string.Join(" ", title).Replace("\"", "");
 
                 List<byte> zeros = new List<byte>();
-                for (int i = 32 - s.Length; i > 0; i--)
-                {
+                for (int i = 32 - s.Length; i > 0; i--) {
                     zeros.Add(0);
                 }
                 header.AddRange(strToBa(s));
                 header.AddRange(zeros);
+            }
+
+            if (has_start) {
+                imps.AddRange([15,2]);
+            }
+
+            if (impscr) {
+                imps.InsertRange(0,[15,2]);
+                imps.AddRange([15,1]);
             }
         }
 
@@ -515,6 +524,7 @@ namespace COBE_CS {
 
             BinaryWriter binfile = new BinaryWriter(File.OpenWrite(path));
             binfile.Write(header.ToArray());
+            binfile.Write(imps.ToArray());
             binfile.Write(inst.ToArray());
             binfile.Close();
         }

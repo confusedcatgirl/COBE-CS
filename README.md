@@ -97,7 +97,7 @@ The Header ranges from Address 00000000 to 0000000F with ``Header:``, but can be
 | 0x09 | BEP | Beeps in a specific length and frequency. | BEP 1000 1000 | 09 03 03E8 00 03 03E8 00 |
 | 0x0A | IFJ | When the If is true, it will go down, otherwise jump to the marker. | IFJ 10 >= num1 marker01 | 0A 12 03 000A 00 06 6E756D31 00 6D61726B65723031 00 |
 | | | | IFJ num1 < 19 marker1 | 0A 11 06 6E756D31 00 03 0013 00 6D61726B65723031 00 |
-| 0x0B | DTB | Draws a pixel to the buffer at a specific position. | DTB 300 250 #0495AB | 0B 03 021C 00 03 00FA 00 04 0495AB 00 |
+| 0x0B | DTB | Draws a pixel to the buffer at a specific position. | DTB Rect 300 250 50 50 #0495AB | 0B 01 03 021C 00 03 00FA 00 03 021C 00 03 00FA 00 04 0495AB 00 |
 | 0x0C | CDB | Clears the draw buffer. | CDB #000000 | 0C 04 000000 00 |
 | 0x0D | RFB | Removes a pixel from the draw buffer. | RFB 301 250 | 0D 03 021D 00 03 00FA 00 |
 | 0x0E | WFT | Waits a specific time in milliseconds. | WFT 1000 | 0E 03 03E8 00 |
@@ -141,6 +141,8 @@ PUT ".\nThat's a great name!"
 
 In this language, drawing to the screen works a bit different. Instead of drawing shapes to the screen, you adds pixels to a buffer, which is then drawn to the screen. The buffer can be modified through DTB, CDB, and RFB. The buffer does not change by itself, and has to be manually manipulated and cleared.
 Drawing will only work if the Program has been defined as "graphical" in the header.
+
+The main instruction
 
 ## Types
 
